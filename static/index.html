@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pix2Pix 黑白照片上色</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f0f2f5; color: #333; min-height: 100vh;
+    }
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff; padding: 24px 0; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,.15);
+    }
+    .header h1 { font-size: 1.8rem; font-weight: 600; }
+    .header p { opacity: .85; margin-top: 6px; font-size: .95rem; }
+    .container { max-width: 960px; margin: 0 auto; padding: 24px 16px; }
+
+    /* 上传区域 */
+    .upload-zone {
+      border: 2px dashed #ccc;
+      border-radius: 12px;
+      padding: 48px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .25s;
+      background: #fff;
+      margin-bottom: 24px;
+    }
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: #667eea; background: #f8f9ff;
+    }
+    .upload-zone .icon { font-size: 3rem; margin-bottom: 12px; }
+    .upload-zone .hint { color: #888; font-size: .9rem; margin-top: 8px; }
+
+    /* 模式切换 */
+    .mode-tabs {
+      display: flex; gap: 0; margin-bottom: 20px; border-radius: 8px;
+      overflow: hidden; border: 1px solid #ddd;
+    }
+    .mode-tab {
+      flex: 1; padding: 10px 20px; text-align: center; cursor: pointer;
+      background: #fff; font-weight: 500; transition: all .2s;
+      user-select: none;
+    }
+    .mode-tab.active { background: #667eea; color: #fff; }
+    .mode-tab:not(.active):hover { background: #f5f5f5; }
+
+    /* 结果区 */
+    .result-section { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+
+    .comparison { display: flex; gap: 20px; flex-wrap: wrap; }
+    .comparison .card { flex: 1; min-width: 280px; }
+    .comparison .card h3 { margin-bottom: 12px; font-size: 1rem; color: #555; text-align: center; }
+    .comparison .card img {
+      width: 100%; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.1);
+    }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 24px; border: none; border-radius: 8px;
+      font-size: 1rem; cursor: pointer; font-weight: 500;
+      transition: all .2s;
+    }
+    .btn-primary { background: #667eea; color: #fff; }
+    .btn-primary:hover { background: #5a6fd6; }
+    .btn-primary:disabled { background: #bbb; cursor: not-allowed; }
+    .btn-outline { background: #fff; color: #667eea; border: 1px solid #667eea; }
+    .btn-outline:hover { background: #f8f9ff; }
+
+    .actions { margin-top: 20px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+    .loading { text-align: center; padding: 32px; }
+    .spinner {
+      width: 40px; height: 40px; border: 4px solid #e0e0e0;
+      border-top-color: #667eea; border-radius: 50%;
+      animation: spin .8s linear infinite; margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .batch-list { margin-top: 16px; }
+    .batch-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 8px 12px; border-radius: 6px;
+    }
+    .batch-item:nth-child(odd) { background: #f9f9f9; }
+    .batch-item .status { font-size: .85rem; }
+    .batch-item .status.done { color: #52c41a; }
+    .batch-item .status.processing { color: #faad14; }
+
+    .error-msg { color: #ff4d4f; text-align: center; padding: 12px; background: #fff2f0; border-radius: 8px; margin-top: 12px; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>🎨 Pix2Pix 黑白照片智能上色</h1>
+    <p>上传黑白图片，AI 自动还原色彩</p>
+  </div>
+
+  <div class="container">
+    <!-- 模式切换 -->
+    <div class="mode-tabs">
+      <div class="mode-tab" :class="{active: mode === 'single'}" @click="switchMode('single')">
+        📷 单张上色
+      </div>
+      <div class="mode-tab" :class="{active: mode === 'batch'}" @click="switchMode('batch')">
+        📦 批量上色
+      </div>
+    </div>
+
+    <!-- 上传区 -->
+    <div class="upload-zone"
+         :class="{dragover: dragOver}"
+         @click="$refs.fileInput.click()"
+         @dragover.prevent="dragOver = true"
+         @dragleave="dragOver = false"
+         @drop.prevent="onDrop">
+      <div class="icon">{{ mode === 'single' ? '📤' : '📁' }}</div>
+      <div>
+        {{ mode === 'single' ? '点击或拖拽上传一张黑白图片' : '点击或拖拽上传多张黑白图片' }}
+      </div>
+      <div class="hint">支持 JPG / PNG / BMP / WebP</div>
+      <input type="file" ref="fileInput" style="display:none"
+             :multiple="mode === 'batch'"
+             :accept="'image/jpeg,image/png,image/bmp,image/webp'"
+             @change="onFileChange" />
+    </div>
+
+    <!-- Loading -->
+    <div v-if="loading" class="loading">
+      <div class="spinner"></div>
+      <div>{{ loadingText }}</div>
+    </div>
+
+    <!-- 错误 -->
+    <div v-if="errorMsg" class="error-msg">{{ errorMsg }}</div>
+
+    <!-- 单张结果 -->
+    <div v-if="mode === 'single' && singleResult" class="result-section">
+      <div class="comparison">
+        <div class="card">
+          <h3>📷 原始黑白图</h3>
+          <img :src="singleOriginal" alt="原始图" />
+        </div>
+        <div class="card">
+          <h3>🎨 AI 上色结果</h3>
+          <img :src="singleResult" alt="上色结果" />
+        </div>
+      </div>
+      <div class="actions">
+        <a class="btn btn-primary" :href="singleResult" download="colorized.png">⬇ 下载结果</a>
+        <button class="btn btn-outline" @click="resetSingle">重新上传</button>
+      </div>
+    </div>
+
+    <!-- 批量结果 -->
+    <div v-if="mode === 'batch' && batchFiles.length > 0" class="result-section">
+      <h3 style="margin-bottom:16px">📦 已选 {{ batchFiles.length }} 张图片</h3>
+      <div class="batch-list">
+        <div class="batch-item" v-for="(f, i) in batchFiles" :key="i">
+          <span>🖼️</span>
+          <span style="flex:1">{{ f.name }}</span>
+          <span class="status" :class="f.status">{{ statusText(f.status) }}</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-primary" @click="startBatch" :disabled="processing">
+          {{ processing ? '上色中...' : '🎨 开始上色' }}
+        </button>
+        <button class="btn btn-primary" v-if="zipUrl" @click="downloadZip" style="background:#52c41a">
+          ⬇ 下载压缩包
+        </button>
+        <button class="btn btn-outline" @click="resetBatch">清空重选</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const { createApp, ref } = Vue;
+
+createApp({
+  setup() {
+    const mode = ref('single');
+    const dragOver = ref(false);
+    const loading = ref(false);
+    const loadingText = ref('正在上色...');
+    const errorMsg = ref('');
+    const processing = ref(false);
+
+    // 单张
+    const singleOriginal = ref('');
+    const singleResult = ref('');
+
+    // 批量
+    const batchFiles = ref([]);
+    const zipUrl = ref('');
+
+    let fileInput = null;
+
+    function switchMode(m) {
+      mode.value = m;
+      resetAll();
+    }
+
+    function resetAll() {
+      singleOriginal.value = '';
+      singleResult.value = '';
+      batchFiles.value = [];
+      zipUrl.value = '';
+      errorMsg.value = '';
+      loading.value = false;
+      processing.value = false;
+    }
+
+    function resetSingle() {
+      singleOriginal.value = '';
+      singleResult.value = '';
+      errorMsg.value = '';
+    }
+
+    function resetBatch() {
+      batchFiles.value = [];
+      zipUrl.value = '';
+      errorMsg.value = '';
+      processing.value = false;
+    }
+
+    function statusText(s) {
+      return s === 'done' ? '✅ 完成' : s === 'processing' ? '⏳ 处理中' : '⏳ 等待中';
+    }
+
+    // 文件选择
+    function onFileChange(e) {
+      const files = Array.from(e.target.files);
+      handleFiles(files);
+      e.target.value = '';  // 允许重复选同一文件
+    }
+
+    function onDrop(e) {
+      dragOver.value = false;
+      const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+      handleFiles(files);
+    }
+
+    function handleFiles(files) {
+      if (!files.length) return;
+      errorMsg.value = '';
+
+      if (mode.value === 'single') {
+        const f = files[0];
+        singleOriginal.value = URL.createObjectURL(f);
+        singleResult.value = '';
+        uploadSingle(f);
+      } else {
+        for (const f of files) {
+          batchFiles.value.push({ name: f.name, file: f, status: 'pending' });
+        }
+      }
+    }
+
+    // 单张上传
+    async function uploadSingle(file) {
+      loading.value = true;
+      loadingText.value = 'AI 正在上色...';
+      errorMsg.value = '';
+
+      try {
+        const form = new FormData();
+        form.append('image', file);
+        const resp = await fetch('/api/colorize', { method: 'POST', body: form });
+        if (!resp.ok) {
+          const data = await resp.json();
+          throw new Error(data.error || '请求失败');
+        }
+        const blob = await resp.blob();
+        singleResult.value = URL.createObjectURL(blob);
+      } catch (e) {
+        errorMsg.value = '上色失败：' + e.message;
+      } finally {
+        loading.value = false;
+      }
+    }
+
+    // 批量处理
+    async function startBatch() {
+      if (batchFiles.value.length === 0) return;
+      processing.value = true;
+      errorMsg.value = '';
+      zipUrl.value = '';
+
+      const form = new FormData();
+      for (const f of batchFiles.value) {
+        form.append('images', f.file);
+        f.status = 'pending';
+      }
+
+      // 标记为处理中
+      for (const f of batchFiles.value) f.status = 'processing';
+      loading.value = true;
+      loadingText.value = `正在处理 ${batchFiles.value.length} 张图片...`;
+
+      try {
+        const resp = await fetch('/api/colorize-batch', { method: 'POST', body: form });
+        if (!resp.ok) throw new Error('批量处理失败');
+
+        const blob = await resp.blob();
+        zipUrl.value = URL.createObjectURL(blob);
+        for (const f of batchFiles.value) f.status = 'done';
+      } catch (e) {
+        errorMsg.value = '批量上色失败：' + e.message;
+        for (const f of batchFiles.value) {
+          if (f.status === 'processing') f.status = 'pending';
+        }
+      } finally {
+        loading.value = false;
+        processing.value = false;
+      }
+    }
+
+    function downloadZip() {
+      if (!zipUrl.value) return;
+      const a = document.createElement('a');
+      a.href = zipUrl.value;
+      a.download = 'colorized_results.zip';
+      a.click();
+    }
+
+    return {
+      mode, dragOver, loading, loadingText, errorMsg, processing,
+      singleOriginal, singleResult, batchFiles, zipUrl,
+      switchMode, resetSingle, resetBatch, onFileChange, onDrop,
+      startBatch, downloadZip, statusText,
+    };
+  }
+}).mount('#app');
+</script>
+</body>
+</html>

@@ -23,7 +23,7 @@ from tqdm import tqdm
 # 路径配置
 INPUT_DIR = os.path.join("data", "black_img")
 OUTPUT_DIR = "result"
-MODEL_PATH = "gen-70.pth"
+MODEL_PATH = "gen-80.pth"
 MODEL_INPUT_SIZE = 256
 
 # 设备
