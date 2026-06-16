@@ -1,0 +1,12 @@
+outputs
+checkpoints
+data
+__pycache__
+*test*
+*.pth
+.claude
+result
+libs
+readmeFiles
+.idea
+.vscode
