@@ -10,3 +10,7 @@ libs
 readmeFiles
 .idea
 .vscode
+*.zip
+*.tar
+*.rar
+*.db

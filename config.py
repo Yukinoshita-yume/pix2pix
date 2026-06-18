@@ -5,7 +5,7 @@ trainFolder = os.path.join("data", "train")
 testFolder = os.path.join("data", "test")
 # folder paths
 
-epochs = 80
+epochs = 150
 batchSize = 8
 lr = 2e-4
 betas = (0.5, 0.999)
