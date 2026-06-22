@@ -220,7 +220,7 @@
             </td>
           </tr>
         </table>
-        <div style="margin-top:12px"><button class="btn btn-outline" @click="fetchAdminUsers">🔄 刷新</button></div>
+        <div style="margin-top:12px"><button class="btn btn-outline" @click="fetchAdminUsers()">🔄 刷新</button></div>
       </div>
 
       <div v-if="adminTab==='models'" class="card">
@@ -238,8 +238,8 @@
         </table>
         <div style="margin-top:16px;border-top:1px solid #eee;padding-top:16px">
           <h4 style="margin-bottom:8px">上传新模型</h4>
-          <input type="file" accept=".pth,.pt" @change="uploadModel" id="modelUpload" style="display:none" />
-          <button class="btn btn-primary" @click="document.getElementById('modelUpload').click()">📤 选择 .pth 文件上传</button>
+          <input type="file" accept=".pth,.pt" @change="uploadModel" ref="modelFileInput" style="display:none" />
+          <button class="btn btn-primary" @click="$refs.modelFileInput.click()">📤 选择 .pth 文件上传</button>
           <span v-if="uploadMsg" style="margin-left:8px;font-size:.85rem" :class="uploadOk?'success-msg':'error-msg'">{{ uploadMsg }}</span>
         </div>
       </div>
