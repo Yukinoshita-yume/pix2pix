@@ -31,7 +31,11 @@ MODEL_INPUT_SIZE = 256
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".webp"}
 UPLOAD_FOLDER = Path("uploads")
+ORIGINALS_DIR = Path("uploads/originals")
+RESULTS_DIR = Path("uploads/results")
 UPLOAD_FOLDER.mkdir(exist_ok=True)
+ORIGINALS_DIR.mkdir(exist_ok=True)
+RESULTS_DIR.mkdir(exist_ok=True)
 
 app = Flask(__name__, static_folder="static", static_url_path="/static")
 app.secret_key = os.urandom(24).hex()
@@ -65,12 +69,27 @@ def init_db():
     db.execute("""
         CREATE TABLE IF NOT EXISTS history (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER,
+            user_id INTEGER NOT NULL,
             original_name TEXT,
-            action TEXT,
+            original_path TEXT,
+            result_path TEXT,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP
         )
     """)
+    # 兼容旧表：缺少新字段则重建
+    cols = [r[1] for r in db.execute("PRAGMA table_info(history)").fetchall()]
+    if "original_path" not in cols:
+        db.execute("DROP TABLE IF EXISTS history")
+        db.execute("""
+            CREATE TABLE history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                original_name TEXT,
+                original_path TEXT,
+                result_path TEXT,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
     db.commit()
     db.close()
 
@@ -366,13 +385,49 @@ def check_quota():
         return False
     return True
 
-def use_quota(n=1):
+def save_history(original_name, original_img, result_img):
+    """保存原图与结果到本地文件夹，写入数据库记录。返回记录 dict。"""
+    uid = session["user_id"]
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    safe_name = f"user_{uid}_{ts}_{original_name}"
+    orig_path = ORIGINALS_DIR / safe_name
+    result_path = RESULTS_DIR / safe_name
+    # 转 PNG 保存
+    original_img.save(str(orig_path), format="PNG")
+    result_img.save(str(result_path), format="PNG")
     db = get_db()
-    db.execute("UPDATE users SET quota_used = quota_used + ? WHERE id = ?",
-               (n, session["user_id"]))
-    db.execute("INSERT INTO history (user_id, original_name, action) VALUES (?, ?, ?)",
-               (session["user_id"], "", "colorize"))
+    cur = db.execute(
+        "INSERT INTO history (user_id, original_name, original_path, result_path) VALUES (?, ?, ?, ?)",
+        (uid, original_name, str(orig_path), str(result_path)))
     db.commit()
+    return {
+        "id": cur.lastrowid,
+        "original_name": original_name,
+        "original_url": f"/uploads/originals/{safe_name}",
+        "result_url": f"/uploads/results/{safe_name}",
+    }
+
+@app.route("/api/history")
+@login_required
+def api_history():
+    db = get_db()
+    rows = db.execute(
+        "SELECT * FROM history WHERE user_id = ? ORDER BY id DESC LIMIT 50",
+        (session["user_id"],)).fetchall()
+    records = []
+    for r in rows:
+        rec = dict(r)
+        name = Path(rec["original_path"] or "").name
+        rec["original_url"] = f"/uploads/originals/{name}" if name else ""
+        rec["result_url"] = f"/uploads/results/{name}" if name else ""
+        records.append(rec)
+    return jsonify({"history": records})
+
+# 静态文件：serve 上传的图片
+@app.route("/uploads/<sub>/<filename>")
+def serve_upload(sub, filename):
+    folder = ORIGINALS_DIR if sub == "originals" else RESULTS_DIR
+    return send_file(folder / filename, mimetype="image/png")
 
 @app.route("/api/colorize", methods=["POST"])
 @login_required
@@ -382,13 +437,22 @@ def api_colorize_single():
     if "image" not in request.files:
         return jsonify({"error": "未上传图片"}), 400
     file = request.files["image"]
-    ext = Path(file.filename).suffix.lower()
+    fname = file.filename or "image.png"
+    ext = Path(fname).suffix.lower()
     if ext not in ALLOWED_EXTENSIONS:
         return jsonify({"error": f"不支持的格式: {ext}"}), 400
     try:
-        image = Image.open(file.stream).convert("L")
-        result = run_colorize(image)
-        use_quota(1)
+        img_bytes = file.read()
+        gray_img = Image.open(io.BytesIO(img_bytes)).convert("L")
+        original_rgb = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+        result = run_colorize(gray_img)
+        # 扣配额
+        db = get_db()
+        db.execute("UPDATE users SET quota_used = quota_used + 1 WHERE id = ?",
+                   (session["user_id"],))
+        db.commit()
+        # 保存到本地 + 数据库
+        save_history(fname, original_rgb, result)
         buf = io.BytesIO()
         result.save(buf, format="PNG")
         buf.seek(0)
@@ -408,24 +472,33 @@ def api_colorize_batch():
     count = 0
     with zipfile.ZipFile(zip_buf, "w", zipfile.ZIP_DEFLATED) as zf:
         for file in files:
-            ext = Path(file.filename).suffix.lower()
+            ext = Path(file.filename or "").suffix.lower()
             if ext not in ALLOWED_EXTENSIONS:
                 continue
             try:
-                image = Image.open(file.stream).convert("L")
-                result = run_colorize(image)
+                img_bytes = file.read()
+                original_img = Image.open(io.BytesIO(img_bytes)).convert("L")
+                original_rgb = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+                result = run_colorize(original_img)
+                # 保存结果到 zip
                 img_buf = io.BytesIO()
                 fmt = ext.lstrip(".").upper()
                 fmt = "JPEG" if fmt in ("JPG", "JPEG") else fmt
                 result.save(img_buf, format=fmt)
                 img_buf.seek(0)
                 zf.writestr(file.filename, img_buf.read())
+                # 存本地历史
+                save_history(file.filename or "image.png", original_rgb, result)
                 count += 1
             except Exception as e:
                 print(f"[Warn] {file.filename}: {e}")
     if count == 0:
         return jsonify({"error": "没有成功处理任何图片"}), 500
-    use_quota(count)
+    # 扣配额
+    db = get_db()
+    db.execute("UPDATE users SET quota_used = quota_used + ? WHERE id = ?",
+               (count, session["user_id"]))
+    db.commit()
     zip_buf.seek(0)
     return send_file(zip_buf, mimetype="application/zip",
                      download_name="colorized_results.zip", as_attachment=True)

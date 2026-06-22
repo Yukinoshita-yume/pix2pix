@@ -8,10 +8,10 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; color: #333; min-height: 100vh; }
-    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,.15); }
-    .header h1 { font-size: 1.3rem; }
-    .header .nav { display: flex; gap: 12px; align-items: center; }
-    .header .user { opacity: .9; font-size: .9rem; }
+    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,.15); flex-wrap: wrap; gap: 8px; }
+    .header h1 { font-size: 1.2rem; }
+    .header .nav { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .header .user { opacity: .9; font-size: .85rem; }
     .container { max-width: 960px; margin: 0 auto; padding: 20px 16px; }
 
     .btn { display: inline-flex; align-items: center; gap: 4px; padding: 8px 18px; border: none; border-radius: 6px; font-size: .9rem; cursor: pointer; font-weight: 500; transition: all .2s; }
@@ -26,10 +26,9 @@
 
     .card { background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.06); margin-bottom: 16px; }
 
-    /* 表单 */
-    .form-group { margin-bottom: 16px; }
+    .form-group { margin-bottom: 14px; }
     .form-group label { display: block; margin-bottom: 4px; font-weight: 500; font-size: .9rem; color: #555; }
-    .form-group input { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: .95rem; transition: border .2s; }
+    .form-group input, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: .95rem; }
     .form-group input:focus { outline: none; border-color: #667eea; }
     .form-row { display: flex; align-items: center; gap: 8px; }
     .form-row input[type=checkbox] { width: auto; }
@@ -37,12 +36,10 @@
     .auth-box { max-width: 380px; margin: 60px auto; }
     .auth-box h2 { text-align: center; margin-bottom: 20px; }
 
-    /* 上传区 */
-    .upload-zone { border: 2px dashed #ccc; border-radius: 10px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all .25s; background: #fff; margin-bottom: 16px; }
+    .upload-zone { border: 2px dashed #ccc; border-radius: 10px; padding: 36px 20px; text-align: center; cursor: pointer; transition: all .25s; background: #fff; margin-bottom: 16px; }
     .upload-zone:hover, .upload-zone.dragover { border-color: #667eea; background: #f8f9ff; }
     .upload-zone .icon { font-size: 2.5rem; margin-bottom: 8px; }
 
-    /* 结果 */
     .comparison { display: flex; gap: 16px; flex-wrap: wrap; }
     .comparison .side { flex: 1; min-width: 250px; }
     .comparison .side h3 { margin-bottom: 8px; font-size: .95rem; color: #555; text-align: center; }
@@ -57,12 +54,10 @@
     .error-msg { color: #ff4d4f; text-align: center; padding: 12px; background: #fff2f0; border-radius: 8px; margin-top: 12px; }
     .success-msg { color: #52c41a; text-align: center; padding: 12px; background: #f6ffed; border-radius: 8px; margin-top: 12px; }
 
-    /* 表格 */
     table { width: 100%; border-collapse: collapse; font-size: .9rem; }
     th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #eee; }
     th { font-weight: 600; color: #555; background: #fafafa; }
 
-    /* 标签 */
     .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: .75rem; font-weight: 500; }
     .tag-admin { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
     .tag-user { background: #e6f7ff; color: #1890ff; border: 1px solid #91d5ff; }
@@ -75,17 +70,33 @@
 
     .model-select { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
     .model-select select { padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: .9rem; flex: 1; }
-    .model-select .badge { font-size: .8rem; color: #888; }
+
+    /* 历史记录 */
+    .history-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    .history-card { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.08); cursor: pointer; transition: transform .15s; }
+    .history-card:hover { transform: translateY(-2px); }
+    .history-card .images { display: flex; }
+    .history-card .images img { width: 50%; height: 140px; object-fit: cover; }
+    .history-card .info { padding: 10px 12px; font-size: .8rem; color: #888; }
+    .history-card .name { font-weight: 500; color: #333; font-size: .85rem; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* 放大预览 */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,.7); z-index: 999; display: flex; align-items: center; justify-content: center; }
+    .modal-content { background: #fff; border-radius: 12px; padding: 24px; max-width: 90vw; max-height: 90vh; overflow: auto; }
+    .modal-content .compare { display: flex; gap: 16px; flex-wrap: wrap; }
+    .modal-content .compare img { max-width: 100%; max-height: 70vh; border-radius: 8px; }
+    .modal-content .close { float: right; cursor: pointer; font-size: 1.5rem; color: #999; }
   </style>
 </head>
 <body>
 <div id="app">
-  <!-- 顶部导航 -->
+  <!-- 顶部 -->
   <div class="header" v-if="user">
     <h1>🎨 Pix2Pix 智能上色</h1>
     <div class="nav">
       <span class="user">{{ user.username }} <span :class="user.role==='admin'?'tag tag-admin':'tag tag-user'">{{ user.role }}</span></span>
       <button class="btn btn-sm btn-outline" @click="page='main'">上色</button>
+      <button class="btn btn-sm btn-outline" @click="page='history';fetchHistory()">历史</button>
       <button v-if="user.role==='admin'" class="btn btn-sm btn-outline" @click="page='admin'">管理</button>
       <button class="btn btn-sm" @click="doLogout" style="color:#ff4d4f">退出</button>
     </div>
@@ -99,47 +110,26 @@
           <div class="tab" :class="{active: authMode==='login'}" @click="authMode='login';clearMsg()">登录</div>
           <div class="tab" :class="{active: authMode==='register'}" @click="authMode='register';clearMsg()">注册</div>
         </div>
-        <div class="form-group">
-          <label>用户名</label>
-          <input v-model="authForm.username" @keyup.enter="authSubmit" placeholder="输入用户名" />
-        </div>
-        <div class="form-group">
-          <label>密码</label>
-          <input v-model="authForm.password" type="password" @keyup.enter="authSubmit" placeholder="输入密码" />
-        </div>
+        <div class="form-group"><label>用户名</label><input v-model="authForm.username" @keyup.enter="authSubmit" placeholder="输入用户名" /></div>
+        <div class="form-group"><label>密码</label><input v-model="authForm.password" type="password" @keyup.enter="authSubmit" placeholder="输入密码" /></div>
         <div class="form-group" v-if="authMode==='register'">
-          <div class="form-row">
-            <input type="checkbox" v-model="authForm.is_admin" id="cbAdmin" />
-            <label for="cbAdmin" style="margin:0">注册为管理员</label>
-          </div>
+          <div class="form-row"><input type="checkbox" v-model="authForm.is_admin" id="cbAdmin" /><label for="cbAdmin" style="margin:0">注册为管理员</label></div>
         </div>
         <div v-if="authError" class="error-msg">{{ authError }}</div>
-        <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px" @click="authSubmit" :disabled="authLoading">
-          {{ authLoading ? '请稍候...' : (authMode==='login' ? '登录' : '注册') }}
-        </button>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px" @click="authSubmit" :disabled="authLoading">{{ authLoading ? '...' : (authMode==='login' ? '登录' : '注册') }}</button>
       </div>
     </div>
 
     <!-- ====== 主页 ====== -->
     <template v-if="user && page==='main'">
-
-      <!-- 模型选择 -->
       <div class="card model-select">
         <span style="font-weight:500">当前模型：</span>
-        <select v-model="activeModel" @change="switchModel">
-          <option v-for="m in models" :key="m.name" :value="m.name">{{ m.name }}（{{ m.size_mb }} MB）</option>
-        </select>
-        <span class="badge" v-if="models.length">{{ models.length }} 个可用</span>
+        <select v-model="activeModel" @change="switchModel"><option v-for="m in models" :key="m.name" :value="m.name">{{ m.name }}（{{ m.size_mb }} MB）</option></select>
+        <span style="font-size:.8rem;color:#888" v-if="models.length">{{ models.length }} 个可用</span>
       </div>
+      <div style="text-align:right;font-size:.85rem;color:#888;margin-bottom:8px">今日用量：{{ user.quota_used }} / {{ user.quota_limit }}</div>
 
-      <!-- 配额 -->
-      <div style="text-align:right;font-size:.85rem;color:#888;margin-bottom:8px">
-        今日用量：{{ user.quota_used }} / {{ user.quota_limit }}
-      </div>
-
-      <!-- 上传区 -->
-      <div class="upload-zone" :class="{dragover: dragOver}" @click="$refs.fInput.click()"
-           @dragover.prevent="dragOver=true" @dragleave="dragOver=false" @drop.prevent="onDrop">
+      <div class="upload-zone" :class="{dragover: dragOver}" @click="$refs.fInput.click()" @dragover.prevent="dragOver=true" @dragleave="dragOver=false" @drop.prevent="onDrop">
         <div class="icon">{{ mode==='single' ? '📤' : '📁' }}</div>
         <div>{{ mode==='single' ? '点击或拖拽上传 1 张黑白图片' : '点击或拖拽上传多张黑白图片' }}</div>
         <div style="color:#999;font-size:.85rem;margin-top:6px">JPG / PNG / BMP / WebP</div>
@@ -151,11 +141,9 @@
         <div class="tab" :class="{active: mode==='batch'}" @click="mode='batch';resetResult()">📦 批量上色</div>
       </div>
 
-      <!-- loading -->
       <div v-if="loading" class="loading"><div class="spinner"></div><div>{{ loadingText }}</div></div>
       <div v-if="errMsg" class="error-msg">{{ errMsg }}</div>
 
-      <!-- 单张结果 -->
       <div v-if="mode==='single' && singleResult" class="card">
         <div class="comparison">
           <div class="side"><h3>📷 原始黑白图</h3><img :src="singleOriginal" /></div>
@@ -167,17 +155,45 @@
         </div>
       </div>
 
-      <!-- 批量结果 -->
       <div v-if="mode==='batch' && batchFiles.length" class="card">
         <h3 style="margin-bottom:12px">📦 {{ batchFiles.length }} 张图片</h3>
-        <table><tr v-for="(f,i) in batchFiles" :key="i">
-          <td>🖼️ {{ f.name }}</td>
-          <td><span :style="{color: f.status==='done'?'#52c41a':f.status==='processing'?'#faad14':'#999'}">{{ statusMap[f.status] }}</span></td>
-        </tr></table>
+        <table><tr v-for="(f,i) in batchFiles" :key="i"><td>🖼️ {{ f.name }}</td><td><span :style="{color: f.status==='done'?'#52c41a':f.status==='processing'?'#faad14':'#999'}">{{ statusMap[f.status] }}</span></td></tr></table>
         <div class="actions">
           <button class="btn btn-primary" @click="startBatch" :disabled="processing">{{ processing ? '处理中...' : '🎨 开始上色' }}</button>
           <button class="btn btn-primary" v-if="zipUrl" @click="downloadZip" style="background:#52c41a">⬇ 下载 ZIP</button>
           <button class="btn btn-outline" @click="resetResult">清空</button>
+        </div>
+      </div>
+    </template>
+
+    <!-- ====== 历史记录 ====== -->
+    <template v-if="user && page==='history'">
+      <h2 style="margin-bottom:16px">📋 我的上色记录</h2>
+      <div v-if="historyLoading" class="loading"><div class="spinner"></div></div>
+      <div v-if="historyList.length===0 && !historyLoading" style="text-align:center;color:#999;padding:40px">暂无历史记录</div>
+      <div class="history-grid">
+        <div class="history-card" v-for="r in historyList" :key="r.id" @click="previewRecord(r)">
+          <div class="images">
+            <img :src="r.original_url" alt="原图" />
+            <img :src="r.result_url" alt="上色" />
+          </div>
+          <div class="info">
+            <div class="name">{{ r.original_name }}</div>
+            <div>{{ r.created_at }}</div>
+          </div>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:16px"><button class="btn btn-outline" @click="fetchHistory">🔄 刷新</button></div>
+
+      <!-- 放大预览 -->
+      <div class="modal-overlay" v-if="preview" @click.self="preview=null">
+        <div class="modal-content">
+          <span class="close" @click="preview=null">&times;</span>
+          <h3 style="margin-bottom:12px">{{ preview.original_name }}</h3>
+          <div class="compare">
+            <div style="flex:1;text-align:center"><div style="color:#888;margin-bottom:4px">原图</div><img :src="preview.original_url" /></div>
+            <div style="flex:1;text-align:center"><div style="color:#888;margin-bottom:4px">上色</div><img :src="preview.result_url" /></div>
+          </div>
         </div>
       </div>
     </template>
@@ -189,14 +205,12 @@
         <div class="tab" :class="{active: adminTab==='models'}" @click="adminTab='models';fetchModels()">🧠 模型管理</div>
       </div>
 
-      <!-- 用户管理 -->
       <div v-if="adminTab==='users'" class="card">
         <h3 style="margin-bottom:12px">用户列表</h3>
         <table>
           <tr><th>ID</th><th>用户名</th><th>角色</th><th>用量</th><th>限额</th><th>操作</th></tr>
           <tr v-for="u in adminUsers" :key="u.id">
-            <td>{{ u.id }}</td>
-            <td>{{ u.username }}</td>
+            <td>{{ u.id }}</td><td>{{ u.username }}</td>
             <td><span :class="u.role==='admin'?'tag tag-admin':'tag tag-user'">{{ u.role }}</span></td>
             <td><input type="number" :value="u.quota_used" style="width:55px" @change="updateUser(u.id,'quota_used',$event.target.value)" /></td>
             <td><input type="number" :value="u.quota_limit" style="width:55px" @change="updateUser(u.id,'quota_limit',$event.target.value)" /></td>
@@ -209,7 +223,6 @@
         <div style="margin-top:12px"><button class="btn btn-outline" @click="fetchAdminUsers">🔄 刷新</button></div>
       </div>
 
-      <!-- 模型管理 -->
       <div v-if="adminTab==='models'" class="card">
         <h3 style="margin-bottom:12px">模型管理（{{ models.length }} 个）</h3>
         <table>
@@ -236,131 +249,67 @@
 
 <script>
 const { createApp, ref, onMounted, watch } = Vue;
-
 createApp({
   setup() {
-    // ── 全局状态 ──
-    const user = ref(null);
-    const page = ref('main');
-    const models = ref([]);
-    const activeModel = ref('');
-
-    // ── 认证 ──
-    const authMode = ref('login');
-    const authForm = ref({ username: '', password: '', is_admin: false });
-    const authError = ref('');
-    const authLoading = ref(false);
-
+    const user = ref(null), page = ref('main');
+    const models = ref([]), activeModel = ref('');
+    const authMode = ref('login'), authForm = ref({ username: '', password: '', is_admin: false }), authError = ref(''), authLoading = ref(false);
     function clearMsg() { authError.value = ''; }
 
     async function fetchMe() {
-      try {
-        const r = await fetch('/api/auth/me');
-        const d = await r.json();
-        user.value = d.user;
-      } catch (e) { user.value = null; }
+      try { const r = await fetch('/api/auth/me'); user.value = (await r.json()).user; } catch (e) { user.value = null; }
     }
-
     async function authSubmit() {
-      authLoading.value = true;
-      authError.value = '';
+      authLoading.value = true; authError.value = '';
       const url = authMode.value === 'login' ? '/api/auth/login' : '/api/auth/register';
       try {
-        const r = await fetch(url, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(authForm.value),
-        });
+        const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(authForm.value) });
         const d = await r.json();
-        if (!r.ok) { authError.value = d.error || '请求失败'; return; }
+        if (!r.ok) { authError.value = d.error || '失败'; return; }
         if (authMode.value === 'login') { await fetchMe(); page.value = 'main'; await fetchModels(); }
-        else { authError.value = ''; alert('注册成功，请登录'); authMode.value = 'login'; authForm.value.username = ''; authForm.value.password = ''; }
+        else { alert('注册成功，请登录'); authMode.value = 'login'; authForm.value.username = ''; authForm.value.password = ''; }
       } catch (e) { authError.value = '网络错误'; }
       finally { authLoading.value = false; }
     }
+    async function doLogout() { await fetch('/api/auth/logout', { method: 'POST' }); user.value = null; resetResult(); }
 
-    async function doLogout() {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      user.value = null; page.value = 'main'; resetResult();
-    }
-
-    // ── 模型 ──
     async function fetchModels() {
-      try {
-        const r = await fetch('/api/models');
-        const d = await r.json();
-        models.value = d.models;
-        activeModel.value = d.active;
-      } catch (e) {}
+      try { const r = await fetch('/api/models'); const d = await r.json(); models.value = d.models; activeModel.value = d.active; } catch (e) {}
     }
-
     async function switchModel(name) {
       try {
-        const r = await fetch('/api/admin/models/activate', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name }),
-        });
+        const r = await fetch('/api/admin/models/activate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
         const d = await r.json();
-        if (r.ok) { activeModel.value = d.active; await fetchMe(); }
-        else alert(d.error);
+        if (r.ok) activeModel.value = d.active; else alert(d.error);
       } catch (e) { alert('切换失败'); }
     }
-
     async function uploadModel(e) {
-      const file = e.target.files[0];
-      if (!file) return;
+      const file = e.target.files[0]; if (!file) return;
       const form = new FormData(); form.append('model', file);
       uploadOk.value = false; uploadMsg.value = '上传中...';
       try {
         const r = await fetch('/api/admin/models/upload', { method: 'POST', body: form });
         const d = await r.json();
-        uploadOk.value = r.ok;
-        uploadMsg.value = r.ok ? `已上传: ${d.name}` : d.error;
+        uploadOk.value = r.ok; uploadMsg.value = r.ok ? `已上传: ${d.name}` : d.error;
         if (r.ok) await fetchModels();
       } catch (e) { uploadOk.value = false; uploadMsg.value = '上传失败'; }
       e.target.value = '';
     }
+    async function deleteModel(name) { if (confirm(`删除 ${name}？`)) { await fetch(`/api/admin/models/${encodeURIComponent(name)}`, { method: 'DELETE' }); await fetchModels(); } }
 
-    async function deleteModel(name) {
-      if (!confirm(`删除模型 ${name}？`)) return;
-      await fetch(`/api/admin/models/${encodeURIComponent(name)}`, { method: 'DELETE' });
-      await fetchModels();
-    }
-
-    // ── 上色 ──
-    const mode = ref('single');
-    const dragOver = ref(false);
-    const loading = ref(false);
-    const loadingText = ref('');
-    const errMsg = ref('');
-    const singleOriginal = ref('');
-    const singleResult = ref('');
-    const batchFiles = ref([]);
-    const processing = ref(false);
-    const zipUrl = ref('');
+    // 上色
+    const mode = ref('single'), dragOver = ref(false), loading = ref(false), loadingText = ref(''), errMsg = ref('');
+    const singleOriginal = ref(''), singleResult = ref('');
+    const batchFiles = ref([]), processing = ref(false), zipUrl = ref('');
     const statusMap = { pending: '⏳ 等待中', processing: '⏳ 处理中', done: '✅ 完成' };
-
-    function resetResult() {
-      singleOriginal.value = ''; singleResult.value = ''; batchFiles.value = []; zipUrl.value = ''; errMsg.value = '';
-    }
-
+    function resetResult() { singleOriginal.value = ''; singleResult.value = ''; batchFiles.value = []; zipUrl.value = ''; errMsg.value = ''; }
+    function onFileChange(e) { handleFiles(Array.from(e.target.files)); e.target.value = ''; }
+    function onDrop(e) { dragOver.value = false; const imgs = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/')); if (imgs.length) handleFiles(imgs); }
     function handleFiles(files) {
       errMsg.value = '';
-      if (mode.value === 'single') {
-        singleOriginal.value = URL.createObjectURL(files[0]);
-        singleResult.value = '';
-        uploadSingle(files[0]);
-      } else {
-        for (const f of files) batchFiles.value.push({ name: f.name, file: f, status: 'pending' });
-      }
+      if (mode.value === 'single') { singleOriginal.value = URL.createObjectURL(files[0]); singleResult.value = ''; uploadSingle(files[0]); }
+      else { for (const f of files) batchFiles.value.push({ name: f.name, file: f, status: 'pending' }); }
     }
-
-    function onFileChange(e) { handleFiles(Array.from(e.target.files)); e.target.value = ''; }
-    function onDrop(e) {
-      dragOver.value = false;
-      const imgs = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
-      if (imgs.length) handleFiles(imgs);
-    }
-
     async function uploadSingle(file) {
       loading.value = true; loadingText.value = 'AI 上色中...'; errMsg.value = '';
       try {
@@ -372,81 +321,56 @@ createApp({
       } catch (e) { errMsg.value = e.message; }
       finally { loading.value = false; }
     }
-
     async function startBatch() {
       if (!batchFiles.value.length) return;
       processing.value = true; errMsg.value = ''; zipUrl.value = '';
       batchFiles.value.forEach(f => f.status = 'processing');
       loading.value = true; loadingText.value = `处理 ${batchFiles.value.length} 张...`;
       try {
-        const form = new FormData();
-        batchFiles.value.forEach(f => form.append('images', f.file));
+        const form = new FormData(); batchFiles.value.forEach(f => form.append('images', f.file));
         const r = await fetch('/api/colorize-batch', { method: 'POST', body: form });
         if (!r.ok) { const d = await r.json(); throw new Error(d.error || '失败'); }
         zipUrl.value = URL.createObjectURL(await r.blob());
         batchFiles.value.forEach(f => f.status = 'done');
         await fetchMe();
-      } catch (e) { errMsg.value = e.message; batchFiles.value.forEach(f => { if (f.status==='processing') f.status = 'pending'; }); }
+      } catch (e) { errMsg.value = e.message; batchFiles.value.forEach(f => { if (f.status==='processing') f.status='pending'; }); }
       finally { loading.value = false; processing.value = false; }
     }
+    function downloadZip() { const a = document.createElement('a'); a.href = zipUrl.value; a.download = 'colorized_results.zip'; a.click(); }
 
-    function downloadZip() {
-      const a = document.createElement('a'); a.href = zipUrl.value; a.download = 'colorized_results.zip'; a.click();
+    // 历史
+    const historyList = ref([]), historyLoading = ref(false), preview = ref(null);
+    async function fetchHistory() {
+      historyLoading.value = true;
+      try { const r = await fetch('/api/history'); historyList.value = (await r.json()).history; } catch (e) {}
+      finally { historyLoading.value = false; }
     }
+    function previewRecord(r) { preview.value = r; }
 
-    // ── 管理员 ──
-    const adminTab = ref('users');
-    const adminUsers = ref([]);
-    const uploadMsg = ref('');
-    const uploadOk = ref(false);
-
-    async function fetchAdminUsers() {
-      try {
-        const r = await fetch('/api/admin/users');
-        adminUsers.value = (await r.json()).users;
-      } catch (e) {}
-    }
-
+    // 管理员
+    const adminTab = ref('users'), adminUsers = ref([]), uploadMsg = ref(''), uploadOk = ref(false);
+    async function fetchAdminUsers() { try { adminUsers.value = (await (await fetch('/api/admin/users')).json()).users; } catch (e) {} }
     async function updateUser(id, field, val) {
       const body = {}; body[field] = parseInt(val) || 0;
-      await fetch(`/api/admin/users/${id}`, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
+      await fetch(`/api/admin/users/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     }
-
     async function toggleRole(u) {
-      await fetch(`/api/admin/users/${u.id}`, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role: u.role === 'admin' ? 'user' : 'admin' }),
-      });
+      await fetch(`/api/admin/users/${u.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role: u.role==='admin'?'user':'admin' }) });
       await fetchAdminUsers();
     }
+    async function deleteUser(id) { if (confirm('确认删除？')) { await fetch(`/api/admin/users/${id}`, { method: 'DELETE' }); await fetchAdminUsers(); } }
+    watch(page, v => { if (v==='admin') fetchAdminUsers(); });
 
-    async function deleteUser(id) {
-      if (!confirm('确认删除该用户？')) return;
-      await fetch(`/api/admin/users/${id}`, { method: 'DELETE' });
-      await fetchAdminUsers();
-    }
-
-    // 监听 page 切换
-    watch(page, v => { if (v === 'admin') fetchAdminUsers(); });
-
-    // ── 初始化 ──
-    onMounted(async () => {
-      await fetchMe();
-      if (user.value) await fetchModels();
-    });
+    onMounted(async () => { await fetchMe(); if (user.value) await fetchModels(); });
 
     return {
-      user, page,
+      user, page, models, activeModel,
       authMode, authForm, authError, authLoading, authSubmit, doLogout, clearMsg,
-      models, activeModel, switchModel, fetchModels, uploadModel, deleteModel,
-      mode, dragOver, loading, loadingText, errMsg,
-      singleOriginal, singleResult, batchFiles, processing, zipUrl,
+      fetchModels, switchModel, uploadModel, deleteModel,
+      mode, dragOver, loading, loadingText, errMsg, singleOriginal, singleResult, batchFiles, processing, zipUrl,
       resetResult, onFileChange, onDrop, startBatch, downloadZip, statusMap,
-      adminTab, adminUsers, fetchAdminUsers, updateUser, toggleRole, deleteUser,
-      uploadMsg, uploadOk,
+      historyList, historyLoading, preview, fetchHistory, previewRecord,
+      adminTab, adminUsers, fetchAdminUsers, updateUser, toggleRole, deleteUser, uploadMsg, uploadOk,
     };
   }
 }).mount('#app');
