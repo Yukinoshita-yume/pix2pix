@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pix2Pix 黑白照片上色</title>
+  <title>智能黑白图像上色系统</title>
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -92,7 +92,7 @@
 <div id="app">
   <!-- 顶部 -->
   <div class="header" v-if="user">
-    <h1>🎨 Pix2Pix 智能上色</h1>
+    <h1>智能黑白图像上色系统</h1>
     <div class="nav">
       <span class="user">{{ user.username }} <span :class="user.role==='admin'?'tag tag-admin':'tag tag-user'">{{ user.role }}</span></span>
       <button class="btn btn-sm btn-outline" @click="page='main'">上色</button>
@@ -124,7 +124,7 @@
     <template v-if="user && page==='main'">
       <div class="card model-select">
         <span style="font-weight:500">当前模型：</span>
-        <select v-model="activeModel" @change="switchModel"><option v-for="m in models" :key="m.name" :value="m.name">{{ m.name }}（{{ m.size_mb }} MB）</option></select>
+        <select v-model="activeModel" @change="switchModel(activeModel)"><option v-for="m in models" :key="m.name" :value="m.name">{{ m.name }}（{{ m.size_mb }} MB）</option></select>
         <span style="font-size:.8rem;color:#888" v-if="models.length">{{ models.length }} 个可用</span>
       </div>
       <div style="text-align:right;font-size:.85rem;color:#888;margin-bottom:8px">今日用量：{{ user.quota_used }} / {{ user.quota_limit }}</div>

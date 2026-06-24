@@ -63,6 +63,7 @@ def init_db():
             role TEXT DEFAULT 'user',
             quota_used INTEGER DEFAULT 0,
             quota_limit INTEGER DEFAULT 50,
+            quota_date TEXT DEFAULT '',
             created_at TEXT DEFAULT CURRENT_TIMESTAMP
         )
     """)
@@ -76,6 +77,10 @@ def init_db():
             created_at TEXT DEFAULT CURRENT_TIMESTAMP
         )
     """)
+    # 兼容旧表：quota_date
+    user_cols = [r[1] for r in db.execute("PRAGMA table_info(users)").fetchall()]
+    if "quota_date" not in user_cols:
+        db.execute("ALTER TABLE users ADD COLUMN quota_date TEXT DEFAULT ''")
     # 兼容旧表：缺少新字段则重建
     cols = [r[1] for r in db.execute("PRAGMA table_info(history)").fetchall()]
     if "original_path" not in cols:
@@ -377,8 +382,20 @@ def api_delete_user(uid):
     return jsonify({"ok": True})
 
 # ═══════════ API：图片上色 ═══════════════════════════
+def daily_reset_quota():
+    """如果日期变更，将当前用户的配额清零。"""
+    today = datetime.now().strftime("%Y-%m-%d")
+    db = get_db()
+    row = db.execute("SELECT quota_date FROM users WHERE id = ?",
+                     (session["user_id"],)).fetchone()
+    if row and row["quota_date"] != today:
+        db.execute("UPDATE users SET quota_used = 0, quota_date = ? WHERE id = ?",
+                   (today, session["user_id"]))
+        db.commit()
+
 def check_quota():
     db = get_db()
+    daily_reset_quota()
     user = db.execute("SELECT quota_used, quota_limit FROM users WHERE id = ?",
                       (session["user_id"],)).fetchone()
     if user and user["quota_used"] >= user["quota_limit"]:
