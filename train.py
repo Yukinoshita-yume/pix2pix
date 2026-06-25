@@ -63,7 +63,7 @@ def trainStep(l, ab, gen, disc, discOpt, genOpt, genScaler, discScaler, bce, l1)
 
 def save_checkpoint(gen, disc, genOpt, discOpt, genScaler, discScaler,
                     epoch, history, bestGenLoss, silent=False):
-    """保存完整训练状态（支持随时中断恢复）。"""
+
     state = {
         "epoch": epoch,
         "gen_state_dict": gen.state_dict(),
@@ -200,7 +200,6 @@ if __name__ == "__main__":
     genScaler = GradScaler(config.device)
     discScaler = GradScaler(config.device)
 
-    # ---- 断点续训 ----
     if os.path.exists(config.resumeFile):
         print(f"发现训练存档: {config.resumeFile}")
         startEpoch, history, bestGenLoss = load_checkpoint(

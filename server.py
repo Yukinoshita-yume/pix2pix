@@ -1,5 +1,4 @@
 """
-Pix2Pix 图片上色 Web 服务 —— 含登录注册、模型管理。
 启动: python server.py
 """
 
@@ -41,8 +40,6 @@ app = Flask(__name__, static_folder="static", static_url_path="/static")
 app.secret_key = os.urandom(24).hex()
 CORS(app, supports_credentials=True)
 
-
-# ── 数据库 ────────────────────────────────────────────
 def get_db():
     if "db" not in g:
         g.db = sqlite3.connect(str(DB_PATH))
@@ -170,8 +167,6 @@ def init_model():
 
 init_model()
 
-
-# ── 鉴权装饰器 ────────────────────────────────────────
 def login_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
@@ -190,8 +185,6 @@ def admin_required(f):
         return f(*args, **kwargs)
     return wrapper
 
-
-# ── 图片预处理 / 推理（与训练一致） ──────────────────
 def preprocess_image(image: Image.Image):
     orig_w, orig_h = image.size
     max_side = max(orig_w, orig_h)
@@ -237,7 +230,7 @@ def run_colorize(image: Image.Image):
     return postprocess_restore(rgb, info)
 
 
-# ═══════════ API：认证 ═══════════════════════════════
+
 @app.route("/api/auth/register", methods=["POST"])
 def api_register():
     data = request.get_json() or {}
@@ -290,7 +283,7 @@ def api_me():
     return jsonify({"user": dict(user)})
 
 
-# ═══════════ API：模型管理 ═══════════════════════════
+
 @app.route("/api/models")
 def api_models():
     models_list = scan_models()
@@ -345,9 +338,6 @@ def api_delete_model(name):
     path.unlink()
     return jsonify({"ok": True})
 
-
-
-# ═══════════ API：管理员用户管理 ═══════════════════════
 @app.route("/api/admin/users")
 @admin_required
 def api_admin_users():
@@ -381,7 +371,6 @@ def api_delete_user(uid):
     db.commit()
     return jsonify({"ok": True})
 
-# ═══════════ API：图片上色 ═══════════════════════════
 def daily_reset_quota():
     """如果日期变更，将当前用户的配额清零。"""
     today = datetime.now().strftime("%Y-%m-%d")
@@ -520,7 +509,6 @@ def api_colorize_batch():
     return send_file(zip_buf, mimetype="application/zip",
                      download_name="colorized_results.zip", as_attachment=True)
 
-# ═══════════ 前端 ════════════════════════════════════
 @app.route("/")
 def index():
     return app.send_static_file("index.html")

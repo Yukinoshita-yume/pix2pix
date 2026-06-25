@@ -53,7 +53,7 @@ def preprocess_square(image: Image.Image) -> tuple[torch.Tensor, dict]:
         image: PIL 灰度图（mode 'L'）
 
     返回:
-        l_norm:  形状 (1, 1, 256, 256)，L 通道归一化到 [-1, 1]（与训练一致）
+        l_norm:  形状 (1, 1, 256, 256)，L 通道归一化到 [-1, 1]
         info:    还原用信息
     """
     orig_w, orig_h = image.size
