@@ -318,7 +318,7 @@ def api_upload_model():
 
 
 @app.route("/api/admin/models/activate", methods=["POST"])
-@admin_required
+@login_required
 def api_activate_model():
     data = request.get_json() or {}
     name = data.get("name")

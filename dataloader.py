@@ -28,34 +28,47 @@ class ImageDataset(Dataset):
         self.targetFolder = targetFolder
         self.files = os.listdir(self.targetFolder)
         self.transforms = transforms
-        
+
         if self.transforms == None:
             self.transforms = Compose(
                 [
                     Resize((256, 256)),
                     RGB2LAB()
                     ]
-                )  
+                )
+
+        # 预先找一张有效图片作为损坏文件的回退目标
+        self._safe_fallback = None
+        for f in self.files:
+            try:
+                img = Image.open(os.path.join(self.targetFolder, f))
+                img.verify()
+                self._safe_fallback = f
+                break
+            except Exception:
+                continue
 
     def __len__(self) -> int:
         return len(self.files)
-    
+
     def __getitem__(self, index):
         image = self.files[index]
         imagePath = os.path.join(self.targetFolder, image)
 
-        try:
-            image = Image.open(imagePath)
-            image.verify()  # 验证图片完整性
-            image = Image.open(imagePath)  # verify 后需重新打开
-            lab = self.transforms(image)
-        except (UnidentifiedImageError, OSError, SyntaxError) as e:
-            warnings.warn(f"跳过损坏的图片: {imagePath} ({e})")
-            # 回退到第一张图片（索引0），确保不中断训练
-            image = Image.open(os.path.join(self.targetFolder, self.files[0]))
-            lab = self.transforms(image)
-
-        return lab[0].unsqueeze(0), lab[1:]
+        for attempt in range(2):
+            try:
+                img = Image.open(imagePath)
+                img.verify()
+                img = Image.open(imagePath)
+                lab = self.transforms(img)
+                return lab[0].unsqueeze(0), lab[1:]
+            except (UnidentifiedImageError, OSError, SyntaxError) as e:
+                if attempt == 0 and self._safe_fallback:
+                    warnings.warn(f"跳过损坏的图片: {imagePath} ({e})")
+                    image = self._safe_fallback
+                    imagePath = os.path.join(self.targetFolder, image)
+                else:
+                    raise RuntimeError(f"无法读取图片且无有效回退: {imagePath}")
     
 def getDataLoader(targetFolder, transforms:Compose=None, batchSize=64, numWorks=4):
     return DataLoader(ImageDataset(targetFolder, transforms), batch_size=batchSize, shuffle=True, num_workers=numWorks)
